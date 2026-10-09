@@ -8,7 +8,7 @@ date: 2026-10-09
 ## Headline
 
 - New project: Claude slices with CrealityPrint. The official v7.3.0 AppImage slices headless with `--cli`.
-- Audits checked the V1 spec and the 7-task plan (24 findings folded in); both are pushed.
+- Audits checked the V1 spec and the 7-task plan (24 findings folded in); GitHub holds both.
 - Two audits replaced preset flattening with raw presets plus `--key=value` flags.
 
 ## What ships
