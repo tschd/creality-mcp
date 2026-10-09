@@ -1,5 +1,5 @@
 ---
-status: draft
+status: review
 ---
 
 # creality-mcp V1: headless slicing for Claude
