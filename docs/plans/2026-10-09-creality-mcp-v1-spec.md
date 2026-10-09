@@ -142,7 +142,8 @@ tool returns a clear error that names the variable to set. The server does not c
   to show settings (`get_preset`) and to know the valid override keys and their current
   values. The slicer always gets the raw leaf file (fact 5).
 - `compatible(printer, kind)`: process and filament presets of the printer's vendor whose
-  `compatible_printers` list holds the printer name. Presets with an empty list and a
+  resolved `compatible_printers` list holds the printer name. Use resolved data: about 110
+  leaves inherit the list from a parent. Presets with an empty list and a
   `compatible_printers_condition` are left out (7 Prusa process presets). Presets with an
   empty list and no condition (1 Sovol) count as compatible with every printer of their
   vendor. The start log states both counts. For K2 Plus 0.4 this gives 10 process and
@@ -169,8 +170,9 @@ Input: `{key: value}` with config keys as they appear in presets (`layer_height`
    folders past `CREALITYPRINT_MAX_JOBS`, only inside the output folder.
 2. Check inputs: each model exists and ends in `.stl`, `.obj` or `.3mf`; 3MF and STL/OBJ
    are not mixed; a 3MF gets no printer, process or filament argument (fact 11).
-3. STL/OBJ: printer = argument or default printer; process = argument or the machine's
-   `default_print_profile`; filaments = argument or `[default_filament_profile]`; at
+3. STL/OBJ: printer = argument or default printer. Process = argument or the machine's
+   resolved `default_print_profile`. Filaments = argument or the resolved
+   `default_filament_profile` (a string or a list in the files). At
    least one filament (fact 10). The process and each filament must be in
    `compatible(printer)`; else tool error that names the compatible list tool.
 4. Build the argument list: `--cli --slice 0 --need-gcode-file --outputdir <job>`, then
@@ -192,8 +194,9 @@ and `key: value` lines, and both the Creality and the BBL time lines.
 
 - `print_time_s` and `print_time_text`: from `estimated printing time (normal mode)`,
   else from `total estimated time` in the `model printing time` line.
-- `filament_mm`, `filament_g`: lists, one value for each filament; `null` when the line is
-  absent.
+- `filament_mm`, `filament_g`: lists, one value for each filament, from
+  `filament used [mm]` and `filament used [g]` (not `total filament used [g]`); `null`
+  when the line is absent.
 - `layers`: from `total layer number`.
 - `settings`: `printer_model`, `print_settings_id`, `filament_settings_id`,
   `layer_height`.
@@ -211,8 +214,9 @@ All tools only read the user's files. `slice_model` writes only inside the outpu
 | `slice_model` | `models[]`, `printer?`, `process?`, `filaments?[]`, `filament_ids?[]`, `overrides?{}` | `{job_dir, plates:[{plate, gcode_path, print_time_s, print_time_text, filament_g[], filament_mm[], layers, warning}], used:{printer, process, filaments, overrides}, missing_stats}` |
 | `read_gcode_summary` | `path` | the same plate stats for any G-code file |
 
-`used` always names the presets the slice used, so Claude can tell the user. For a 3MF,
-`used` holds the values from the G-code config block.
+`used` always names the presets the slice used, so Claude can tell the user. It has the
+same keys for both inputs. For a 3MF, the values come from the G-code config block
+(`printer_settings_id`, `print_settings_id`, `filament_settings_id`).
 
 ### Errors
 
