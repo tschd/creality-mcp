@@ -1,6 +1,7 @@
 ---
 tags: [session, creality-mcp, 3d-printing, mcp]
 date: 2026-10-09
+version: 2026.10.09
 ---
 
 # Session 2026-10-09 — creality-mcp V1 spec and plan
