@@ -8,3 +8,5 @@ __pycache__/
 squashfs-root/
 jobs/
 .env
+# Trimmed comment-only headers for the parser tests (plan Task 3)
+!tests/fixtures/gcode/*.gcode
