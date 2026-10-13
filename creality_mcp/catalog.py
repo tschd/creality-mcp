@@ -64,6 +64,7 @@ class Catalog:
             for kind in KINDS
         }
         self._resolved: dict[tuple[str, str, str], dict] = {}
+        self._process_keys: set[str] | None = None
 
     @classmethod
     def load(cls, profiles_dir: Path) -> "Catalog":
@@ -173,6 +174,16 @@ class Catalog:
                 ):
                     condition_only += 1
         return {**counts, "condition_only": condition_only, "unrestricted": unrestricted}
+
+    def process_keys(self) -> set[str]:
+        """Every key of every resolved selectable process preset (the override keys a 3MF
+        may use, since its process is unknown before the slice). Computed once."""
+        if self._process_keys is None:
+            keys: set[str] = set()
+            for p in self._selectable["process"]:
+                keys |= self._resolve_or_empty(p).keys()
+            self._process_keys = keys
+        return set(self._process_keys)
 
     def _resolve_or_empty(self, preset: Preset) -> dict:
         try:
