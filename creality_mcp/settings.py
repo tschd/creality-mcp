@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     profiles: Path | None = None
     output: Path = Path("~/.cache/creality-mcp/jobs")
     default_printer: str = "Creality K2 Plus 0.4 nozzle"
-    timeout_s: int = 600
-    max_jobs: int = 50
+    timeout_s: int = Field(default=600, ge=1)
+    max_jobs: int = Field(default=50, ge=1)
 
     @field_validator("app", "profiles", "output")
     @classmethod

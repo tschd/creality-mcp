@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from creality_mcp.settings import Settings, check_install
 
@@ -50,3 +51,9 @@ def test_check_install_missing_profiles(tmp_path):
     msg = check_install(Settings(app=_make_app(tmp_path)))
     assert msg is not None
     assert "CREALITYPRINT_PROFILES" in msg
+
+
+@pytest.mark.parametrize("field", ["max_jobs", "timeout_s"])
+def test_counts_at_least_one(field):
+    with pytest.raises(ValidationError):
+        Settings(**{field: 0})

@@ -1,15 +1,16 @@
 import json
-import os
 import time
 from pathlib import Path
 
 import pytest
 
 from creality_mcp.catalog import Catalog
+from creality_mcp.gcode import parse_gcode
 from creality_mcp.settings import Settings
 from creality_mcp.slicer import (
     SliceError,
     SliceRequest,
+    _used_from_gcode,
     log_tail,
     new_job_dir,
     run_slice,
@@ -119,9 +120,17 @@ def test_timeout_kills_slicer(settings, catalog, cube, monkeypatch):
         run_slice(req(cube), settings, catalog)
     assert time.monotonic() - start < 4
     [job] = settings.output.iterdir()
-    pid = int((job / "pid").read_text())
-    with pytest.raises(ProcessLookupError):
-        os.kill(pid, 0)
+    for name in ("pid", "child_pid"):
+        assert not _running(int((job / name).read_text()))
+
+
+def _running(pid: int) -> bool:
+    """False once the process is gone or a zombie (killed; its new parent reaps it later)."""
+    try:
+        state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
+    except FileNotFoundError:
+        return False
+    return state != "Z"
 
 
 def test_3mf_refuses_presets(settings, catalog, tmp_path):
@@ -192,3 +201,50 @@ def test_log_tail_skips_noise(tmp_path):
     (tmp_path / "slicer.log").write_text("\n".join(lines) + "\n")
     tail = log_tail(tmp_path, n=3)
     assert tail == "line 27\nline 28\nline 29"
+
+
+def test_plates_in_numeric_order_with_warnings(settings, catalog, cube, monkeypatch):
+    monkeypatch.setenv("FAKE_MODE", "warn")
+    plates = run_slice(req(cube), settings, catalog).plates
+    assert [(p.plate, p.warning) for p in plates] == [(2, None), (10, "overhang")]
+
+
+def test_success_without_gcode(settings, catalog, cube, monkeypatch):
+    monkeypatch.setenv("FAKE_MODE", "nogcode")
+    with pytest.raises(SliceError, match="no G-code"):
+        run_slice(req(cube), settings, catalog)
+
+
+def test_nul_in_inputs(settings, catalog, cube):
+    with pytest.raises(SliceError):
+        run_slice(req(cube, overrides={"layer_height": "0.2\x00"}), settings, catalog)
+    with pytest.raises(SliceError, match="NUL"):
+        run_slice(req(f"{cube}\x00"), settings, catalog)
+
+
+def test_new_job_dir_leaves_symlinks(tmp_path):
+    target = tmp_path / "target"
+    target.mkdir()
+    out = tmp_path / "jobs"
+    out.mkdir()
+    (out / "20260101T000000Z-abcdef").symlink_to(target)
+    new_job_dir(out, max_jobs=1)
+    assert (out / "20260101T000000Z-abcdef").is_symlink()
+    assert target.is_dir()
+
+
+def test_job_dir_error_is_slice_error(tmp_path):
+    blocker = tmp_path / "file"
+    blocker.write_text("x")
+    with pytest.raises(SliceError, match="job folder"):
+        new_job_dir(blocker / "jobs", max_jobs=3)
+
+
+def test_used_from_gcode_without_ids():
+    stats = parse_gcode(FIXTURES / "gcode" / "creality_k2.gcode")
+    stats.settings = {}
+    assert _used_from_gcode(stats) == {
+        "printer": "unknown",
+        "process": "unknown",
+        "filaments": ["unknown"],
+    }

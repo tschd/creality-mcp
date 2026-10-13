@@ -60,3 +60,13 @@ def test_empty_file(tmp_path):
     assert s.layers is None
     assert s.missing == ["filament_g", "filament_mm", "layers", "print_time_s"]
     assert s.gcode_path == str(empty)
+
+
+def test_footer_beats_earlier_body_comment(tmp_path):
+    # Custom start G-code can carry a comment that looks like a stat; the footer wins.
+    body = "; filament used [g] = 0\n; layer_height = 9\nG1 X0\n"
+    path = tmp_path / "plate_1.gcode"
+    path.write_text(body + (GCODE / "creality_k2.gcode").read_text())
+    s = parse_gcode(path)
+    assert s.filament_g == [4.34]
+    assert s.settings["layer_height"] == "0.2"

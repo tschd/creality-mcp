@@ -4,6 +4,7 @@ result.json and the plate G-code.
 Success is result.json `return_code == 0`; the exit code is not the signal.
 """
 
+import contextlib
 import json
 import os
 import re
@@ -94,6 +95,8 @@ def run_slice(req: SliceRequest, settings: Settings, catalog: Catalog) -> SliceR
 def _check_models(req: SliceRequest) -> list[Path]:
     if not req.models:
         raise SliceError("no model given")
+    if any("\x00" in m for m in req.models):
+        raise SliceError("a model path may not contain NUL")
     models = [Path(m).expanduser().resolve() for m in req.models]
     for path in models:
         if not path.is_file():
@@ -149,14 +152,21 @@ def _compatible(catalog: Catalog, machine: Preset, kind: str, name: str) -> Pres
 
 def new_job_dir(output: Path, max_jobs: int) -> Path:
     """A new job folder; first deletes the oldest job folders beyond `max_jobs - 1`. Only
-    folders whose names match the job pattern are ever deleted."""
-    output.mkdir(parents=True, exist_ok=True)
-    jobs = sorted(p for p in output.iterdir() if p.is_dir() and JOB_NAME.match(p.name))
-    for old in jobs[: max(0, len(jobs) - (max_jobs - 1))]:
-        shutil.rmtree(old)
-    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    job = output / f"{stamp}-{secrets.token_hex(3)}"
-    job.mkdir()
+    folders whose names match the job pattern are ever deleted; symlinks never are."""
+    try:
+        output.mkdir(parents=True, exist_ok=True)
+        jobs = sorted(
+            p
+            for p in output.iterdir()
+            if JOB_NAME.match(p.name) and p.is_dir() and not p.is_symlink()
+        )
+        for old in jobs[: max(0, len(jobs) - (max_jobs - 1))]:
+            shutil.rmtree(old)
+        stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        job = output / f"{stamp}-{secrets.token_hex(3)}"
+        job.mkdir()
+    except OSError as exc:
+        raise SliceError(f"cannot prepare a job folder in {output}: {exc}") from exc
     return job
 
 
@@ -182,18 +192,33 @@ def build_argv(
 
 
 def _execute(argv: list[str], job: Path, timeout_s: int) -> int:
+    # stdin is the MCP channel on stdio: the slicer must never read it.
     with (job / "slicer.log").open("wb") as log:
-        proc = subprocess.Popen(  # noqa: S603 - argv list, no shell; paths checked first
-            argv, cwd=job, stdout=log, stderr=subprocess.STDOUT, start_new_session=True
-        )
+        try:
+            proc = subprocess.Popen(  # noqa: S603 - argv list, no shell; paths checked first
+                argv,
+                cwd=job,
+                stdin=subprocess.DEVNULL,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+        except (OSError, ValueError) as exc:
+            raise SliceError(f"cannot start the slicer: {exc}") from exc
         try:
             proc.communicate(timeout=timeout_s)
         except subprocess.TimeoutExpired:
-            # AppRun ends in exec, so the process group holds the slicer.
-            os.killpg(proc.pid, signal.SIGKILL)
+            _kill_group(proc.pid)
             proc.wait()
             raise SliceError(f"slicer timed out after {timeout_s} s") from None
+        _kill_group(proc.pid)  # helpers the slicer left behind
     return proc.returncode
+
+
+def _kill_group(pgid: int) -> None:
+    """Kill the slicer's process group (AppRun ends in exec, so the group holds the slicer)."""
+    with contextlib.suppress(ProcessLookupError):
+        os.killpg(pgid, signal.SIGKILL)
 
 
 def read_result(job: Path, exit_code: int) -> dict:
@@ -241,8 +266,9 @@ def _read_plates(job: Path, result: dict) -> list[PlateStats]:
 def _used_from_gcode(plate: PlateStats) -> dict:
     s = plate.settings
     filaments = [f.strip().strip('"') for f in s.get("filament_settings_id", "").split(";")]
+    # The G-code config block always names these; "unknown" says loudly when it does not.
     return {
-        "printer": s.get("printer_settings_id"),
-        "process": s.get("print_settings_id"),
-        "filaments": [f for f in filaments if f],
+        "printer": s.get("printer_settings_id") or "unknown",
+        "process": s.get("print_settings_id") or "unknown",
+        "filaments": [f for f in filaments if f] or ["unknown"],
     }

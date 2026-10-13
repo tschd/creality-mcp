@@ -55,7 +55,8 @@ def _floats(text: str | None) -> list[float] | None:
 
 
 def _read_pairs(path: Path) -> tuple[dict[str, str], str | None]:
-    """Every `; key = value` / `; key: value` comment, first occurrence wins."""
+    """Every `; key = value` / `; key: value` comment. The last occurrence wins: the stats
+    footer and the config block close the file, after any comment in custom G-code."""
     pairs: dict[str, str] = {}
     bbl_time = None
     with path.open(encoding="utf-8", errors="replace") as fh:
@@ -67,7 +68,7 @@ def _read_pairs(path: Path) -> tuple[dict[str, str], str | None]:
                 bbl_time = m["v"].strip()
                 continue
             if m := _LINE.match(line):
-                pairs.setdefault(m["k"], m["v"].strip())
+                pairs[m["k"]] = m["v"].strip()
     return pairs, bbl_time
 
 

@@ -30,7 +30,7 @@ def test_unknown_key_names_close_match():
         build_override_flags({"layer_hieght": 0.2}, {"layer_height"})
 
 
-@pytest.mark.parametrize("value", ["0.2;0.3", "0.2\n", "0.2\r"])
+@pytest.mark.parametrize("value", ["0.2;0.3", "0.2\n", "0.2\r", "0.2\x00"])
 def test_value_that_would_split(value):
     with pytest.raises(OverrideError):
         build_override_flags({"layer_height": value}, {"layer_height"})
@@ -40,7 +40,9 @@ def test_empty():
     assert build_override_flags({}, {"layer_height"}) == []
 
 
-@pytest.mark.parametrize("key", ["post_process", "filename_format"])
+@pytest.mark.parametrize(
+    "key", ["post_process", "filename_format", "name", "inherits", "print_settings_id"]
+)
 def test_blocked_keys(key):
     with pytest.raises(OverrideError, match="cannot be overridden"):
         build_override_flags({key: "/opt/x.sh"}, {key})

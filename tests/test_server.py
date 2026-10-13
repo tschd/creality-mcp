@@ -113,3 +113,19 @@ async def test_missing_app(tmp_path):
         result = await client.call_tool("list_printers", {})
     assert result.is_error is True
     assert "CREALITYPRINT_APP" in result.content[0].text
+
+
+async def test_list_presets_broken_machine(tmp_path):
+    machine = tmp_path / "profiles" / "V" / "machine"
+    machine.mkdir(parents=True)
+    (machine / "m.json").write_text(
+        '{"type": "machine", "name": "M", "inherits": "gone", "instantiation": "true"}'
+    )
+    app = tmp_path / "AppRun"
+    app.write_text("#!/bin/sh\n")
+    app.chmod(0o755)
+    server = build_server(Settings(app=app, profiles=tmp_path / "profiles"))
+    async with Client(server) as client:
+        result = await client.call_tool("list_presets", {"printer": "M", "kind": "process"})
+    assert result.is_error is True
+    assert "gone" in result.content[0].text

@@ -78,12 +78,9 @@ def build_server(settings: Settings) -> MCPServer:
         cat = need_catalog()
         with _tool_errors():
             machine = cat.find("machine", printer, vendor)
+            presets = cat.compatible(machine, kind)
         q = (query or "").lower()
-        return [
-            {"name": p.name, "vendor": p.vendor}
-            for p in cat.compatible(machine, kind)
-            if q in p.name.lower()
-        ]
+        return [{"name": p.name, "vendor": p.vendor} for p in presets if q in p.name.lower()]
 
     @server.tool(
         description=(

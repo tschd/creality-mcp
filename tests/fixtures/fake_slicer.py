@@ -4,6 +4,7 @@
 import json
 import os
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -34,7 +35,22 @@ def main() -> int:
         print("[trace] noise")
         print("[error] boom")
         return 254
+    if mode == "warn":
+        # Plates 2 and 10: numeric order, and a warning only on plate 10.
+        for n in (10, 2):
+            shutil.copy(GCODE, out / f"plate_{n}.gcode")
+        plates = [{"id": 2, "warning_message": ""}, {"id": 10, "warning_message": "overhang"}]
+        result = {"return_code": 0, "error_string": "Success.", "sliced_plates": plates}
+        (out / "result.json").write_text(json.dumps(result))
+        return 0
+    if mode == "nogcode":
+        result = {"return_code": 0, "error_string": "Success.", "sliced_plates": []}
+        (out / "result.json").write_text(json.dumps(result))
+        return 0
     if mode == "sleep":
+        # A child in the same process group must die with the slicer.
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+        (out / "child_pid").write_text(str(child.pid))
         (out / "pid").write_text(str(os.getpid()))
         time.sleep(30)
     return 1
