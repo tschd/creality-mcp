@@ -38,3 +38,9 @@ def test_value_that_would_split(value):
 
 def test_empty():
     assert build_override_flags({}, {"layer_height"}) == []
+
+
+@pytest.mark.parametrize("key", ["post_process", "filename_format"])
+def test_blocked_keys(key):
+    with pytest.raises(OverrideError, match="cannot be overridden"):
+        build_override_flags({key: "/opt/x.sh"}, {key})

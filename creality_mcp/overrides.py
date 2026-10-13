@@ -5,6 +5,10 @@ The CLI fails with no result.json on an unknown flag, so every key is checked fi
 
 import difflib
 
+# Keys an override may never set: the slicer runs `post_process` scripts after the slice,
+# and `filename_format` can name an output path outside the job folder.
+BLOCKED_KEYS = frozenset({"post_process", "filename_format"})
+
 
 class OverrideError(ValueError):
     pass
@@ -15,6 +19,8 @@ def build_override_flags(
 ) -> list[str]:
     flags = []
     for key in sorted(overrides):
+        if key in BLOCKED_KEYS:
+            raise OverrideError(f"setting '{key}' cannot be overridden")
         if key not in known_keys:
             close = difflib.get_close_matches(key, sorted(known_keys), n=5, cutoff=0.6)
             hint = f"; close: {', '.join(close)}" if close else ""
