@@ -69,3 +69,9 @@ _(snapshot as of close — canonical list lives in [[Open Items]])_
    Check: brief `%USERPROFILE%\creality-mandalore-brief.md` on mandalore
 5. **A slice outlives a killed server.** The slicer runs until it ends or reaches its timeout (default 600 seconds), so the risk is low.
    Detail: `creality_mcp/slicer.py` `_execute`
+
+## Addendum 16:55
+
+- Item 4 closed: `mandalore-scalable-sparrow` built `master` with no repo changes: VS 2022 Build Tools (MSVC 14.44 + `VC.ATL`), SDK 10.0.22000, CMake 4.4.4, Strawberry Perl. The deps took 14m40s, the slicer 14m40s, and `CrealityPrint.exe` ran for 20 seconds with no crash.
+- Workarounds were environment only: `CMAKE_POLICY_VERSION_MINIMUM=3.5` for CMake 4, the `VC.ATL` component for breakpad, and a separate winget package for SDK 22000. `CLAUDE.md` now records the recipe and drops the wrong "VS 2026 Community".
+- New item 6: the `install` step needs a WebView2 installer that the repo does not hold. Also, translations did not compile, and nobody has seen the main window yet.
