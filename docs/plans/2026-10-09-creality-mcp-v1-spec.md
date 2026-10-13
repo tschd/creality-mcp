@@ -1,5 +1,5 @@
 ---
-status: review
+status: done
 ---
 
 # creality-mcp V1: headless slicing for Claude
@@ -277,5 +277,5 @@ prompts work in both.
 
 ## Open questions
 
-1. Default printer: which K2 model and nozzle? (Spec assumes `Creality K2 Plus 0.4
-   nozzle`. It is one setting, so a wrong guess costs one line.)
+1. Default printer: which K2 model and nozzle? **Answered:** `Creality K2 Plus 0.4 nozzle`
+   (TS, 2026-10-13).

@@ -1,5 +1,5 @@
 ---
-status: review
+status: done
 ---
 
 # creality-mcp V1 Implementation Plan
