@@ -1,0 +1,6 @@
+{
+    "type": "process",
+    "name": "any printer",
+    "inherits": "fdm_process_common",
+    "instantiation": "true"
+}

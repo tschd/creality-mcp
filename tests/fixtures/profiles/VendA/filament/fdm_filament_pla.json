@@ -1,0 +1,8 @@
+{
+    "type": "filament",
+    "name": "fdm_filament_pla",
+    "instantiation": "false",
+    "nozzle_temperature": [
+        "210"
+    ]
+}

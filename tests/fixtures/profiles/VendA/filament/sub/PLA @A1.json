@@ -1,0 +1,9 @@
+{
+    "type": "filament",
+    "name": "PLA @A1",
+    "inherits": "fdm_filament_pla",
+    "instantiation": "true",
+    "compatible_printers": [
+        "A1 0.4 nozzle"
+    ]
+}

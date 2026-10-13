@@ -1,0 +1,8 @@
+{
+    "type": "process",
+    "name": "cond only",
+    "inherits": "fdm_process_common",
+    "instantiation": "true",
+    "compatible_printers": [],
+    "compatible_printers_condition": "nozzle_diameter[0]==0.4"
+}

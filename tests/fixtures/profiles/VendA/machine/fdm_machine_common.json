@@ -1,0 +1,9 @@
+{
+    "type": "machine",
+    "name": "fdm_machine_common",
+    "instantiation": "false",
+    "nozzle_diameter": [
+        "0.4"
+    ],
+    "bed_temp": "60"
+}

@@ -1,0 +1,10 @@
+{
+    "type": "process",
+    "name": "0.20mm A @A1",
+    "inherits": "fdm_process_common",
+    "instantiation": "true",
+    "compatible_printers": [
+        "A1 0.4 nozzle"
+    ],
+    "wall_loops": "3"
+}

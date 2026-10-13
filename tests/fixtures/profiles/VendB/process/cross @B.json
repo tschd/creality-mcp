@@ -1,0 +1,6 @@
+{
+    "type": "process",
+    "name": "cross @B",
+    "inherits": "0.20mm A @A1",
+    "instantiation": "true"
+}

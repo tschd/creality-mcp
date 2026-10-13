@@ -1,0 +1,7 @@
+{
+    "type": "process",
+    "name": "0.16mm A @A1",
+    "inherits": "0.20mm A @A1",
+    "instantiation": "true",
+    "layer_height": "0.16"
+}

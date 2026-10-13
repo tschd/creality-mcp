@@ -1,0 +1,11 @@
+{
+    "type": "machine",
+    "name": "A1 0.4 nozzle",
+    "inherits": "fdm_machine_common",
+    "instantiation": "true",
+    "printer_model": "A1",
+    "default_print_profile": "0.20mm A @A1",
+    "default_filament_profile": [
+        "PLA @A1"
+    ]
+}

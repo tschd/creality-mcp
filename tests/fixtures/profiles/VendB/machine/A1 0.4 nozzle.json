@@ -1,0 +1,9 @@
+{
+    "type": "machine",
+    "name": "A1 0.4 nozzle",
+    "instantiation": "true",
+    "printer_model": "A1",
+    "nozzle_diameter": [
+        "0.4"
+    ]
+}
